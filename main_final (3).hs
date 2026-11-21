@@ -47,3 +47,27 @@ passo j ev = case destinos (posicao j) ev of
 repetir :: Jogo -> [Evento] -> [(Evento, Desfecho, Jogo)]   -- para quando o jogo acaba
 repetir j (e : es) | status j == Jogando = let (j', d) = passo j e in (e, d, j') : repetir j' es
 repetir _ _ = []
+mensagem _ Invalido = "Nada aconteceu."
+mensagem j (Moveu de para)
+  | para == Morte = "A armadilha disparou! Você morreu. Vidas restantes: " ++ show (vidas j)
+  | de == Morte = "Você renasceu na Entrada."
+  | para == Tesouro = "Você encontrou o Tesouro!"
+  | otherwise = "Você foi de " ++ show de ++ " para " ++ show para ++ "."
+data Comando = Sair | Ajuda | Mapa | Vazio | Fazer Evento | Ambiguo [Evento] | QuisDizer [Evento]
+             | Desconhecido deriving (Show, Eq)
+-- 4. DIGITAÇÃO: minúsculo, sem acentos, sem espaços sobrando
+normalizar = map (\c -> maybe c id (lookup c (zip "áàâãäéèêëíìîïóòôõöúùûüç" "aaaaaeeeeiiiiooooouuuuc")) ) . map toLower . unwords . words
+interpretar :: String -> Comando
+interpretar texto
+  | n == "" = Vazio
+  | n `elem` ["sair", "s"] = Sair
+  | n `elem` ["ajuda", "?", "h"] = Ajuda
+  | n `elem` ["mapa", "m"] = Mapa
+  | otherwise = case [e | e <- universo, n `isPrefixOf` nome e] of
+      [e] -> Fazer e   -- "av" ou "a" -> Avancar
+      [] -> case [e | e <- universo, diferencas (nome e) <= 2] of { [] -> Desconhecido; ps -> QuisDizer ps }
+      muitos -> Ambiguo muitos
+  where n = normalizar texto
+        nome = normalizar . show
+        diferencas p = length [() | (x, y) <- zip n p, x /= y] + abs (length n - length p)   -- "voltra" x "voltar" = 2
+nomes = intercalate " ou " . map show
