@@ -111,3 +111,23 @@ filhosDoCasal pop chave = [mutar (chave + 50) (ia ++ fb), mutar (chave + 60) (ib
           | otherwise = take p f ++ [eventoAleatorio (c + 2)] ++ drop (p + 1) f
           where f = take tamMax filho
                 p = sorteio (length f) (c + 1)
+executarAG s = [(g, melhor p) | (g, p) <- zip [0 .. geracoes] pops]
+  where pops = scanl proxima [ind i | i <- [1 .. tamPop]] [0 ..]
+        ind i = [eventoAleatorio ((s * 1000 + i) * 31 + k) | k <- [1 .. 4 + sorteio 6 (s * 1000 + i)]]
+        proxima p g = melhor p : take (tamPop - 1) (concat [filhosDoCasal p (s * 10000000 + g * 10000 + i * 100) | i <- [1 .. tamPop `div` 2]])
+perguntar :: String -> IO String   -- se a entrada acabar (Ctrl+D), encerra sem erro
+perguntar t = putStr t >> isEOF >>= \fim ->
+  if fim then putStrLn "\nEntrada encerrada. Até a próxima!" >> exitSuccess else getLine
+aviso t = putStrLn ("\n  [!] " ++ t ++ "\n")
+perguntarSemente :: IO Semente
+perguntarSemente = do
+  t <- unwords . words <$> perguntar "Semente (número inteiro, Enter = 42): "
+  case (t, readMaybe t) of
+    ("", _) -> return 42
+    (_, Just n) -> return (n `mod` 2147483648)
+    _ -> aviso ("\"" ++ t ++ "\" não é um número inteiro. Tente de novo.") >> perguntarSemente
+descreverEvento s e
+  | length ops <= 1 = show e
+  | otherwise = show e ++ " (" ++ intercalate " / " [show (p * 100 `div` sum (map snd ops)) ++ "% " ++ show d | (d, p) <- ops] ++ ")"
+  where ops = destinos s e
+mostrarMapa = mapM_ (putStrLn . ("  " ++)) . desenharMapa
