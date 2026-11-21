@@ -90,3 +90,24 @@ simularTeste evs = (nub (Entrada : [d | (_, _, d) <- usadas]), usadas)
 cobertura :: Eq a => [a] -> [a] -> Double
 cobertura univ vis = 100 * fromIntegral (length (nub vis)) / fromIntegral (length univ)
 arredondar x = fromIntegral (round (x * 10) :: Int) / 10
+-- 7. ALGORITMO GENÉTICO ---------------------------------------------------------------------
+tamPop, geracoes, tamTorneio, taxaMutacao, tamMax :: Int
+tamPop = 40; geracoes = 60; tamTorneio = 3; taxaMutacao = 25; tamMax = 14
+avaliar :: Individuo -> Double   -- premia cobertura; desconta 0,5 por evento (testes curtos ganham)
+avaliar ind = 0.4 * cobertura universo es + 0.6 * cobertura todasTransicoes ts - 0.5 * fromIntegral (length ind)
+  where (es, ts) = simularTeste ind
+melhor [] = []
+melhor xs = foldl1 (\a b -> if avaliar a >= avaliar b then a else b) xs
+torneio :: [Individuo] -> Int -> Individuo   -- sorteia 3 testes e devolve o melhor
+torneio pop chave = melhor [pop !! sorteio (length pop) (chave + k) | k <- [1 .. tamTorneio]]
+filhosDoCasal :: [Individuo] -> Int -> [Individuo]   -- cruzamento + mutação (25%)
+filhosDoCasal pop chave = [mutar (chave + 50) (ia ++ fb), mutar (chave + 60) (ib ++ fa)]
+  where paiA = torneio pop chave
+        paiB = torneio pop (chave + 10)
+        (ia, fa) = splitAt (sorteio (length paiA + 1) (chave + 20)) paiA
+        (ib, fb) = splitAt (sorteio (length paiB + 1) (chave + 21)) paiB
+        mutar c filho
+          | null f || sorteio 100 c >= taxaMutacao = f
+          | otherwise = take p f ++ [eventoAleatorio (c + 2)] ++ drop (p + 1) f
+          where f = take tamMax filho
+                p = sorteio (length f) (c + 1)
