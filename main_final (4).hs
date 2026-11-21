@@ -71,3 +71,22 @@ interpretar texto
         nome = normalizar . show
         diferencas p = length [() | (x, y) <- zip n p, x /= y] + abs (length n - length p)   -- "voltra" x "voltar" = 2
 nomes = intercalate " ou " . map show
+-- 5. MAPA (largura calculada: barras sempre alinhadas; sala nova => acrescentar em desenharMapa)
+centralizar n t = replicate esq ' ' ++ t ++ replicate (folga - esq) ' '
+  where { folga = max 0 (n - length t); esq = folga `div` 2 }
+desenharMapa :: Estado -> [String]
+desenharMapa atual = [cel SalaSecreta, ponte, cel Entrada ++ elo ++ cel Corredor ++ elo ++ cel Tesouro
+                     , ponte ++ replicate 5 ' ' ++ ponte, cel Morte ++ elo ++ cel Armadilha]
+  where larg = maximum (map (length . show) (universo :: [Estado])) + 4
+        cel s = "[" ++ centralizar (larg - 2) (if s == atual then "*" ++ show s ++ "*" else show s) ++ "]"
+        (elo, ponte) = (" --- ", centralizar larg "|")
+-- 6. COBERTURA (a Armadilha depende de sorte: acompanhamos TODOS os lugares possíveis)
+passoDoTeste :: ([Estado], [Transicao]) -> Evento -> ([Estado], [Transicao])
+passoDoTeste (lugares, usadas) ev = (nub ([s | s <- lugares, null (destinos s ev)] ++ [d | (_, _, d) <- feitas]), nub (usadas ++ feitas))
+  where feitas = [(s, ev, d) | s <- lugares, (d, _) <- destinos s ev]
+simularTeste :: [Evento] -> ([Estado], [Transicao])   -- (estados visitados, transições usadas)
+simularTeste evs = (nub (Entrada : [d | (_, _, d) <- usadas]), usadas)
+  where usadas = snd (foldl passoDoTeste ([Entrada], []) evs)
+cobertura :: Eq a => [a] -> [a] -> Double
+cobertura univ vis = 100 * fromIntegral (length (nub vis)) / fromIntegral (length univ)
+arredondar x = fromIntegral (round (x * 10) :: Int) / 10
