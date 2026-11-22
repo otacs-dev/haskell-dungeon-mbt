@@ -1,5 +1,5 @@
 
-# Dungeon Zelda Experimental
+# Dungeon Zelda MBT
 
 Protótipo em **Haskell** que une duas ideias sobre uma pequena dungeon inspirada em *Zelda*:
 
@@ -7,9 +7,6 @@ Protótipo em **Haskell** que une duas ideias sobre uma pequena dungeon inspirad
 2. **Teste Baseado em Modelos (MBT)** com **Algoritmo Genético (AG)**: o computador descobre sozinho a menor sequência de ações que passa por todos os lugares e caminhos da dungeon.
 
 Os dois usam **o mesmo modelo** da dungeon, então as regras ficam escritas em um lugar só.
-
-O código está numa versão **compacta**: o `main_final.hs` tem exatamente **200 linhas**, com comentários curtos de uma linha. Para uma leitura mais didática, veja a versão anterior (709 linhas, com mini guia e comentários em cada função).
-
 ---
 
 ## Sumário
@@ -71,14 +68,14 @@ O `Tesouro` é o único estado final: chegar nele encerra a partida. A `Morte` c
 **Requisito:** [GHC](https://www.haskell.org/ghc/) (instale via [GHCup](https://www.haskell.org/ghcup/)). Só a biblioteca padrão é usada, sem dependências externas. Não usa `head`/`tail`, que geram aviso nas versões mais novas. A versão compacta foi escrita sem acesso a um compilador; se aparecer erro ao compilar, avise.
 
 ```bash
-runghc main_final.hs
+runghc main_final (8).hs
 ```
 
 Ou compilando:
 
 ```bash
-ghc main_final.hs
-./main_final        # no Windows: .\main_final.exe
+ghc main_final (8).hs
+./main_final (8)       # no Windows: .\main_final (8).exe
 ```
 
 O programa envia o texto em UTF-8. No **Windows (PowerShell)**, rode `chcp 65001` antes de abrir o `ghci` ou o executável; sem isso, `ç`, `ã` e `é` aparecem trocados por símbolos. O comando vale só para a janela aberta. Se ainda ficar estranho, troque a fonte do terminal para Consolas ou Cascadia Mono.
@@ -169,17 +166,17 @@ A sequência encontrada pode ser colada na **opção 3** do menu para ser jogada
 
 ## Estrutura do código
 
-Tudo está em `main_final.hs` (200 linhas), em 7 partes:
+Tudo está em `main_final (8).hs` (200 linhas), em 7 partes:
 
-| Parte | Conteúdo |
-|---|---|
-| 1. Modelo | Estados, eventos e a lista de transições com pesos. |
-| 2. Sorte e jogo | Sorteio reproduzível, escolha por pesos, estado da partida e a função `passo`. Sem teclado nem tela. |
-| 3. Digitação | `interpretar` transforma o texto digitado em comando. |
-| 4. Mapa | Desenho com largura calculada. |
-| 5. Cobertura | Simulação de teste sobre o modelo e cálculo das porcentagens. |
-| 6. Algoritmo Genético | Nota, torneio, cruzamento, mutação e laço de gerações. |
-| 7. Teclado e tela | Único lugar com `putStrLn` e `getLine`. |
+| Cabeçalho | Parte | Conteúdo |
+|---|---|---|
+| 1 | Modelo | Estados, eventos e a lista de transições com pesos. |
+| — | Sorte e jogo | Logo depois do modelo: sorteio reproduzível (`sorteio`), escolha por pesos (`escolher`), estado da partida e a função `passo`. Sem teclado nem tela. |
+| 4 | Digitação | `interpretar` transforma o texto digitado em comando. |
+| 5 | Mapa | Desenho com largura calculada. |
+| 6 | Cobertura | Simulação de teste sobre o modelo e cálculo das porcentagens. |
+| 7 | Algoritmo Genético | Nota, torneio, cruzamento, mutação e laço de gerações. |
+| — | Teclado e tela | Fim do arquivo, a partir de `perguntar`. Único lugar com `putStrLn` e `getLine`. |
 
 **Para mudar a dungeon**, edite a lista `modelo`. O jogo, a cobertura e o AG se adaptam. Se criar um estado novo, acrescente-o também em `desenharMapa`.
 
@@ -193,6 +190,3 @@ Tudo está em `main_final.hs` (200 linhas), em 7 partes:
 - [ ] Salvar em arquivo as sequências de teste geradas.
 - [ ] Ajustar o AG para achar a sequência mínima em mais sementes (hoje são 12 de 30).
 
----
-
-*Protótipo acadêmico/experimental de MBT com Algoritmos Genéticos em Haskell.*
