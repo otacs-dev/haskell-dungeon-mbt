@@ -80,7 +80,7 @@ ghc main_final (8).hs
 
 O programa envia o texto em UTF-8. No **Windows (PowerShell)**, rode `chcp 65001` antes de abrir o `ghci` ou o executável; sem isso, `ç`, `ã` e `é` aparecem trocados por símbolos. O comando vale só para a janela aberta. Se ainda ficar estranho, troque a fonte do terminal para Consolas ou Cascadia Mono.
 
-No `ghci`, depois de `ghci main_final.hs`, digite `main` para iniciar e `:q` para sair.
+No `ghci`, depois de `ghci main_final (8).hs`, digite `main` para iniciar e `:q` para sair.
 
 ## O menu
 
