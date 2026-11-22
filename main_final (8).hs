@@ -161,3 +161,40 @@ modoJogo = do
   f <- jogar (novoJogo s)
   putStrLn ("\nResumo: " ++ show (turnos f) ++ " turnos, " ++ show (vidas f) ++ " vidas restantes.\n  Sequência jogada: "
             ++ show (reverse (historico f)) ++ "\n  Para repetir: opção 3, semente " ++ show s ++ ".")
+modoReproduzir = do
+  s <- perguntarSemente
+  ps <- words . map (\c -> if c `elem` ",;[]" then ' ' else c) <$> perguntar "Eventos (ex.: avancar, explorar, voltar): "
+  let ents = [(p, interpretar p) | p <- ps]
+      evs = [e | (_, Fazer e) <- ents]
+      erros = [p | (p, c) <- ents, c `notElem` map Fazer (universo :: [Evento])]
+      passos = repetir (novoJogo s) evs
+      ultimo = if null passos then novoJogo s else (\(_, _, x) -> x) (last passos)
+  if null ps then aviso "Nenhum evento informado."
+  else if not (null erros) then aviso ("Não entendi: " ++ intercalate ", " erros)
+  else do
+    mapM_ (\(n, (e, d, x)) -> putStrLn ("  " ++ show n ++ ". " ++ show e ++ ": " ++ mensagem x d)) (zip [1 :: Int ..] passos)
+    putStrLn ("\n  Resultado: " ++ show (status ultimo) ++ ", em " ++ show (posicao ultimo) ++ ", com " ++ show (vidas ultimo) ++ " vida(s).")
+    if length passos < length evs then putStrLn "  (O jogo terminou antes do fim da sequência.)" else return ()
+modoAG = do
+  s <- perguntarSemente
+  let evolucao = executarAG s
+      best = snd (last evolucao)
+      (es, ts) = simularTeste best
+  putStrLn "\nEvolução da nota do melhor teste:"
+  mapM_ (\(g, i) -> putStrLn ("  geração " ++ show g ++ ": " ++ show (arredondar (avaliar i)) ++ "  " ++ show i)) [x | x@(g, _) <- evolucao, g `mod` 10 == 0]
+  putStrLn ("\nMelhor sequência de teste:\n" ++ show best)
+  putStrLn ("Cobertura de estados:    " ++ show (arredondar (cobertura universo es)) ++ "%\nCobertura de transições: "
+            ++ show (arredondar (cobertura todasTransicoes ts)) ++ "%")
+  putStrLn ("Nota final:              " ++ show (arredondar (avaliar best)) ++ "\n\nPara jogar esta sequência, use a opção 3 e cole:\n  " ++ show best)
+menu = do
+  mapM_ putStrLn ["\n=== Dungeon Zelda ===", "  1) Jogar a dungeon", "  2) Gerar testes com o Algoritmo Genético"
+                 , "  3) Reproduzir uma sequência de eventos", "  0) Sair"]
+  r <- perguntar "Escolha: "
+  case normalizar r of
+    "1" -> modoJogo >> menu
+    "2" -> modoAG >> menu
+    "3" -> modoReproduzir >> menu
+    "0" -> putStrLn "Até a próxima!"
+    "" -> menu
+    _ -> aviso "Opção inválida. Digite 1, 2, 3 ou 0." >> menu
+main = hSetEncoding stdout utf8 >> hSetEncoding stdin utf8 >> hSetBuffering stdout NoBuffering >> menu
