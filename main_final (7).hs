@@ -131,3 +131,33 @@ descreverEvento s e
   | otherwise = show e ++ " (" ++ intercalate " / " [show (p * 100 `div` sum (map snd ops)) ++ "% " ++ show d | (d, p) <- ops] ++ ")"
   where ops = destinos s e
 mostrarMapa = mapM_ (putStrLn . ("  " ++)) . desenharMapa
+jogar j = case status j of
+  Venceu -> putStrLn "\n  *** Você chegou ao Tesouro! Vitória! ***" >> return j
+  Perdeu -> putStrLn "\n  *** Suas vidas acabaram. Fim de jogo. ***" >> return j
+  Jogando -> do
+    putStrLn "" >> mostrarMapa (posicao j)
+    putStrLn ("\n  Vidas: " ++ show (vidas j) ++ "   Turnos: " ++ show (turnos j) ++ "   (* = você está aqui)")
+    putStrLn ("  Opções: " ++ intercalate ", " (map (descreverEvento (posicao j)) (eventosValidos (posicao j))))
+    lerComando j
+lerComando j = do
+  linha <- perguntar "\n> "
+  let de = lerComando j
+      avisar t = aviso t >> de
+      validos = eventosValidos (posicao j)
+  case interpretar linha of
+    Sair -> putStrLn "\n  Partida encerrada." >> return j
+    Vazio -> de
+    Ajuda -> putStrLn "\n  Comandos: avancar (a), explorar (e), voltar (v), renascer (r), mapa (m), ajuda (?), sair (s).\n  Maiúsculas, acentos e espaços não importam; abreviações e pequenos erros são aceitos." >> de
+    Mapa -> putStrLn "" >> mostrarMapa (posicao j) >> de
+    Ambiguo es -> avisar ("Pode ser " ++ nomes es ++ ". Digite mais letras.")
+    QuisDizer es -> avisar ("Não entendi. Você quis dizer: " ++ nomes es ++ "?")
+    Desconhecido -> avisar "Não conheço esse comando. Digite 'ajuda'."
+    Fazer e
+      | e `elem` validos -> let (j', d) = passo j e in putStrLn ("\n  " ++ mensagem j' d) >> jogar j'
+      | otherwise -> avisar (show e ++ " não funciona em " ++ show (posicao j) ++ ". Opções: " ++ intercalate ", " (map show validos))
+modoJogo = do
+  s <- perguntarSemente
+  putStrLn ("\nSemente " ++ show s ++ ". Você tem 3 vidas. Digite 'ajuda' se precisar.")
+  f <- jogar (novoJogo s)
+  putStrLn ("\nResumo: " ++ show (turnos f) ++ " turnos, " ++ show (vidas f) ++ " vidas restantes.\n  Sequência jogada: "
+            ++ show (reverse (historico f)) ++ "\n  Para repetir: opção 3, semente " ++ show s ++ ".")
